@@ -23,8 +23,8 @@ readonly -A NPM_PACKAGES=(
   ["@semantic-release/exec"]="6.0.3"
   ["@semantic-release/commit-analyzer"]="11.1.0"
   ["@semantic-release/release-notes-generator"]="12.1.0"
-  ["@semantic-release/gitlab"]="13.0.3"
   ["conventional-changelog-conventionalcommits"]="7.0.2"
+  ["@semantic-release/github"]="10.0.2"
 )
 
 # Control Flow Logic
