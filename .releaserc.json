@@ -3,7 +3,7 @@
     "main"
   ],
   "plugins": [
-    "@semantic-release/gitlab",
+    "@semantic-release/github",
     [
       "@semantic-release/release-notes-generator",
       {
