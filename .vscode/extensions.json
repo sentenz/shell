@@ -1,0 +1,16 @@
+{
+  "recommendations": [
+    "ms-vscode-remote.remote-containers",
+    "ms-vscode-remote.remote-wsl",
+    "ms-vscode-remote.vscode-remote-extensionpack",
+    "sonarsource.sonarlint-vscode",
+    "vivaxy.vscode-conventional-commits",
+    "alefragnani.project-manager",
+    "eamodio.gitlens",
+    "yzhang.markdown-all-in-one",
+    "davidanson.vscode-markdownlint",
+    "bierner.markdown-mermaid",
+    "timonwong.shellcheck",
+    "foxundermoon.shell-format"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "Base",
+  "image": "mcr.microsoft.com/vscode/devcontainers/base:debian-12",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": "false",
+      "username": "vscode",
+      "userUid": "1000",
+      "userGid": "1000",
+      "upgradePackages": "true"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest",
+      "ppa": "false"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": []
+    }
+  },
+  "runArgs": [
+    "--name",
+    "devcontainer-shell",
+    "-v",
+    "devcontainer-shell-data:/app/data"
+  ],
+  "forwardPorts": [],
+  "postAttachCommand": "",
+  "remoteUser": "vscode"
+}
