@@ -1,20 +1,17 @@
 #!/bin/bash
 #
-# SPDX-License-Identifier: Apache-2.0
-#
 # Library for package management actions.
 
 source "$(dirname "${BASH_SOURCE[0]}")/log.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/util.sh"
 
-########################
 # Generic package list iteration.
+#
 # Arguments:
 #   $1 - function
 #   $@ - packages
 # Returns:
 #   $? - Boolean
-#########################
 function pkg_list() {
   local func="${1:?function is missing}"
   local -n packages="${2:?array is missing}"
@@ -33,71 +30,73 @@ function pkg_list() {
   return "${retval}"
 }
 
-########################
 # Install apt package dependency.
+#
 # Arguments:
 #   $1 - package
 #   $2 - version
 # Returns:
 #   $? - Boolean
-#########################
 function pkg_apt_install() {
   local package="${1:?package is missing}"
   local version="${2:-}"
 
   local -i retval=0
 
-  if ! command -v "${package}" &>/dev/null; then
-    if util_string_exist "${version}"; then
-      apt install "${package}"="${version}" -qqq -y --no-install-recommends
-      ((retval = $?))
-    else
-      apt install "${package}" -qqq -y --no-install-recommends
-      ((retval = $?))
-    fi
+  # Check if package is already installed (any version)
+  if command -v "${package}" &>/dev/null; then
+    return 0
   fi
 
-  return "${retval}"
-}
-
-########################
-# Uninstall apt package dependency.
-# Arguments:
-#   $1 - package
-# Returns:
-#   $? - Boolean
-#########################
-function pkg_apt_uninstall() {
-  local package="${1:?package is missing}"
-
-  local -i retval=0
-
-  if command -v "${package}" &>/dev/null; then
-    apt remove -y -qqq "${package}"
+  if util_string_exist "${version}"; then
+    apt install "${package}"="${version}" -qqq -y --no-install-recommends
+    ((retval = $?))
+  else
+    apt install "${package}" -qqq -y --no-install-recommends
     ((retval = $?))
   fi
 
   return "${retval}"
 }
 
-########################
+# Uninstall apt package dependency.
+#
+# Arguments:
+#   $1 - package
+# Returns:
+#   $? - Boolean
+function pkg_apt_uninstall() {
+  local package="${1:?package is missing}"
+
+  local -i retval=0
+
+  # Check if package is installed (any version)
+  if ! command -v "${package}" &>/dev/null; then
+    return 0
+  fi
+
+  apt remove -y -qqq "${package}"
+  ((retval = $?))
+
+  return "${retval}"
+}
+
 # Update apt package dependencies.
+#
 # Arguments:
 #   None
 # Returns:
 #   None
-#########################
 function pkg_apt_update() {
-  apt update -qqq
+  apt update -qqq &>/dev/null
 }
 
-########################
 # Cleanup apt package dependencies.
+#
 # Arguments:
 #   None
 # Returns:
 #   $? - Boolean
-#########################
 function pkg_apt_clean() {
   local -i retval=0
 
@@ -118,13 +117,12 @@ function pkg_apt_clean() {
   return "${retval}"
 }
 
-########################
 # Install apt package list dependencies.
+#
 # Arguments:
 #   $@ - packages
 # Returns:
 #   $? - Boolean
-#########################
 function pkg_apt_install_list() {
   local -A packages="${1:?array is missing}"
 
@@ -137,15 +135,15 @@ function pkg_apt_install_list() {
   return "${retval}"
 }
 
-########################
 # Uninstall apt package list dependencies.
+#
 # Arguments:
 #   $@ - packages
 # Returns:
 #   $? - Boolean
-#########################
 function pkg_apt_uninstall_list() {
-  local -a packages=("$@")
+  local -A packages=("$@")
+
   local -i retval=0
 
   pkg_list pkg_apt_uninstall "${packages[@]}"
@@ -154,114 +152,160 @@ function pkg_apt_uninstall_list() {
   return "${retval}"
 }
 
-########################
-# Install snap package dependency.
+# Install apk package dependency.
+#
 # Arguments:
 #   $1 - package
 #   $2 - version
 # Returns:
 #   $? - Boolean
-#########################
-function pkg_snap_install() {
+function pkg_apk_install() {
   local package="${1:?package is missing}"
   local version="${2:-}"
 
   local -i retval=0
 
-  if ! command -v "${package}" &>/dev/null; then
-    if util_string_exist "${version}"; then
-      snap install "${package}" --channel="${version}"/stable --classic --quiet
-      ((retval = $?))
-    else
-      snap install "${package}" --classic --quiet
-      ((retval = $?))
-    fi
+  # Check if package is already installed (any version)
+  if command -v "${package}" &>/dev/null; then
+    return 0
+  fi
+
+  if util_string_exist "${version}"; then
+    apk add "${package}=${version}" --quiet --no-cache
+    ((retval = $?))
+  else
+    apk add "${package}" --quiet --no-cache
+    ((retval = $?))
   fi
 
   return "${retval}"
 }
 
-########################
+# Uninstall apk package dependency.
+#
+# Arguments:
+#   $1 - package
+# Returns:
+#   $? - Boolean
+function pkg_apk_uninstall() {
+  local package="${1:?package is missing}"
+
+  local -i retval=0
+
+  # Check if package is installed (any version)
+  if ! command -v "${package}" &>/dev/null; then
+    return 0
+  fi
+
+  apk del --quiet "${package}"
+  ((retval = $?))
+
+  return "${retval}"
+}
+
+# Update apk package dependencies.
+#
+# Arguments:
+#   None
+# Returns:
+#   None
+function pkg_apk_update() {
+  apk update --quiet &>/dev/null
+}
+
+# Cleanup apk package dependencies.
+#
+# Arguments:
+#   None
+# Returns:
+#   $? - Boolean
+function pkg_apk_clean() {
+  local -i retval=0
+
+  apk fix --quiet
+  ((retval |= $?))
+
+  apk cache clean --quiet
+  ((retval |= $?))
+
+  rm -rf /var/cache/apk/*
+  ((retval |= $?))
+
+  log_message "clean" "apk" "${retval}"
+
+  return "${retval}"
+}
+
+# Install apk package list dependencies.
+#
+# Arguments:
+#   $@ - packages
+# Returns:
+#   $? - Boolean
+function pkg_apk_install_list() {
+  local -A packages="${1:?array is missing}"
+
+  local -i retval=0
+
+  pkg_apk_update
+  pkg_list pkg_apk_install "${packages[@]}"
+  ((retval |= $?))
+
+  return "${retval}"
+}
+
+# Uninstall apk package list dependencies.
+#
+# Arguments:
+#   $@ - packages
+# Returns:
+#   $? - Boolean
+function pkg_apk_uninstall_list() {
+  local -A packages=("$@")
+
+  local -i retval=0
+
+  pkg_list pkg_apk_uninstall "${packages[@]}"
+  ((retval |= $?))
+
+  return "${retval}"
+}
+
 # Install pip package dependency.
+#
 # Arguments:
 #   $1 - package
 #   $2 - version
 # Returns:
 #   $? - Boolean
-#########################
 function pkg_pip_install() {
   local package="${1:?package is missing}"
   local version="${2:-}"
 
   local -i retval=0
 
-  if ! pip3 show "${package}" &>/dev/null; then
-    # HACK PEP 668 - Check Python version to avoid pip break
-    if [[ $(python3 -c 'import sys; print(sys.version_info >= (3, 11))') == 'True' ]]; then
-      if util_string_exist "${version}"; then
-        pip3 install "${package}"=="${version}" --break-system-packages -q
-        ((retval = $?))
-      else
-        pip3 install "${package}" --break-system-packages -q
-        ((retval = $?))
-      fi
-    else
-      if util_string_exist "${version}"; then
-        pip3 install "${package}"=="${version}" -q
-        ((retval = $?))
-      else
-        pip3 install "${package}" -q
-        ((retval = $?))
-      fi
-    fi
+  # Check if package is already installed (any version)
+  if pipx list | grep -qE "^package ${package} "; then
+    return 0
+  fi
+
+  if util_string_exist "${version}"; then
+    pipx -q install -q "${package}==${version}" >/dev/null 2>&1
+    ((retval = $?))
+  else
+    pipx -q install -q "${package}" >/dev/null 2>&1
+    ((retval = $?))
   fi
 
   return "${retval}"
 }
 
-########################
-# Cleanup pip package dependencies.
-# Arguments:
-#   None
-# Returns:
-#   $? - Boolean
-#########################
-function pkg_pip_clean() {
-  local -i retval=0
-
-  pip3 cache purge -q
-  ((retval |= $?))
-
-  log_message "clean" "pip" "${retval}"
-
-  return "${retval}"
-}
-
-########################
-# Install snap package list dependencies.
-# Arguments:
-#   $@ - packages
-# Returns:
-#   $? - Boolean
-#########################
-function pkg_snap_install_list() {
-  local -A packages="${1:?array is missing}"
-
-  local -i retval=0
-
-  pkg_list pkg_snap_install "${packages[@]}"
-  ((retval |= $?))
-
-  return "${retval}"
-}
-
-########################
 # Install pip package list dependencies.
+#
 # Arguments:
 #   $@ - packages
 # Returns:
 #   $? - Boolean
-#########################
 function pkg_pip_install_list() {
   local -A packages="${1:?array is missing}"
 
@@ -273,60 +317,194 @@ function pkg_pip_install_list() {
   return "${retval}"
 }
 
-########################
-# Install npm package dependency.
+# Uninstall pip package dependency.
+#
 # Arguments:
 #   $1 - package
 #   $2 - version
 # Returns:
 #   $? - Boolean
-#########################
-function pkg_npm_install() {
+function pkg_pip_uninstall() {
   local package="${1:?package is missing}"
   local version="${2:-}"
 
   local -i retval=0
 
-  if ! npm list "${package}" -g --depth=0 &>/dev/null; then
-    if util_string_exist "${version}"; then
-      npm install "${package}"@"${version}" --silent -g
-      ((retval = $?))
-    else
-      npm install "${package}"@latest --silent -g
-      ((retval = $?))
-    fi
+  # Check if package is installed (any version)
+  if ! pipx list | grep -qE "^package ${package} "; then
+    return 0
   fi
+
+  pipx -q uninstall -q "${package}" --yes
+  ((retval |= $?))
 
   return "${retval}"
 }
 
-########################
-# Uninstall npm package dependency.
+# Uninstall a list of pip package dependencies.
+#
 # Arguments:
-#   $1 - package
+#   $@ - packages
 # Returns:
 #   $? - Boolean
-#########################
-function pkg_npm_uninstall() {
-  local package="${1:?package is missing}"
+function pkg_pip_uninstall_list() {
+  local -A packages="${1:?array is missing}"
 
   local -i retval=0
 
-  if ! npm list "${package}" -g --depth=0 &>/dev/null; then
-    npm uninstall "${package}" --silent -g
+  pkg_list pkg_pip_uninstall "${packages[@]}"
+  ((retval |= $?))
+
+  return "${retval}"
+}
+
+# Cleanup pip package dependencies.
+#
+# Arguments:
+#   None
+# Returns:
+#   $? - Boolean
+function pkg_pip_clean() {
+  local -i retval=0
+
+  pip3 cache purge -q
+  ((retval |= $?))
+
+  log_message "clean" "pip" "${retval}"
+
+  return "${retval}"
+}
+
+# Install snap package dependency.
+#
+# Arguments:
+#   $1 - package
+#   $2 - version
+# Returns:
+#   $? - Boolean
+function pkg_snap_install() {
+  local package="${1:?package is missing}"
+  local version="${2:-}"
+
+  local -i retval=0
+
+  # Check if package is already installed (any version)
+  if command -v "${package}" &>/dev/null; then
+    return 0
+  fi
+
+  if util_string_exist "${version}"; then
+    snap install "${package}" --channel="${version}/stable" --classic &>/dev/null
+    ((retval = $?))
+  else
+    snap install --stable "${package}" --classic &>/dev/null
     ((retval = $?))
   fi
 
   return "${retval}"
 }
 
-########################
-# Install npm package list dependencies.
+# Install snap package list dependencies.
+#
 # Arguments:
 #   $@ - packages
 # Returns:
 #   $? - Boolean
-#########################
+function pkg_snap_install_list() {
+  local -A packages="${1:?array is missing}"
+
+  local -i retval=0
+
+  pkg_list pkg_snap_install "${packages[@]}"
+  ((retval |= $?))
+
+  return "${retval}"
+}
+
+# Clean obsolete snap revisions.
+#
+# This function removes disabled revisions from the system,
+# ensuring that only the active revision of each snap package is retained.
+#
+# Returns:
+#   $? - Boolean indicating success.
+function pkg_snap_clean() {
+  local -i retval=0
+
+  # TODO Implement `pkg_snap_clean` script function
+
+  return "${retval}"
+}
+
+# Uninstall snap package dependency.
+#
+# Arguments:
+#   $1 - package
+# Returns:
+#   $? - Boolean indicating success.
+function pkg_snap_uninstall() {
+  local package="${1:?package is missing}"
+
+  local -i retval=0
+
+  # Check if package is installed (any version)
+  if ! command -v "${package}" &>/dev/null; then
+    return 0
+  fi
+
+  snap remove "${package}" &>/dev/null
+  ((retval = $?))
+
+  return "${retval}"
+}
+
+# Uninstall a list of snap package dependencies.
+#
+# Arguments:
+#   $@ - associative array of packages
+# Returns:
+#   $? - Boolean indicating success.
+function pkg_snap_uninstall_list() {
+  local -A packages="${1:?array is missing}"
+
+  local -i retval=0
+
+  pkg_list pkg_snap_uninstall "${packages[@]}"
+  ((retval |= $?))
+
+  return "${retval}"
+}
+
+# Install npm package dependency.
+#
+# Arguments:
+#   $1 - package
+#   $2 - version
+# Returns:
+#   $? - Boolean
+function pkg_npm_install() {
+  local package="${1:?package is missing}"
+  local version="${2:-}"
+
+  local -i retval=0
+
+  # Check if package is already installed (any version)
+  if npm list "${package}" -g --depth=0 &>/dev/null; then
+    return 0
+  fi
+
+  npm install "${package}@${version:-latest}" --silent -g
+  ((retval = $?))
+
+  return "${retval}"
+}
+
+# Install npm package list dependencies.
+#
+# Arguments:
+#   $@ - packages
+# Returns:
+#   $? - Boolean
 function pkg_npm_install_list() {
   local -A packages="${1:?array is missing}"
 
@@ -338,13 +516,51 @@ function pkg_npm_install_list() {
   return "${retval}"
 }
 
-########################
+# Uninstall npm package dependency.
+#
+# Arguments:
+#   $1 - package
+# Returns:
+#   $? - Boolean
+function pkg_npm_uninstall() {
+  local package="${1:?package is missing}"
+
+  local -i retval=0
+
+  # Check if package is installed (any version)
+  if npm list "${package}" -g --depth=0 &>/dev/null; then
+    return 0
+  fi
+
+  npm uninstall "${package}" --silent -g
+  ((retval = $?))
+
+  return "${retval}"
+}
+
+# Uninstall a list of npm package dependencies.
+#
+# Arguments:
+#   $@ - packages
+# Returns:
+#   $? - Boolean
+function pkg_npm_uninstall_list() {
+  local -A packages="${1:?array is missing}"
+
+  local -i retval=0
+
+  pkg_list pkg_npm_uninstall "${packages[@]}"
+  ((retval |= $?))
+
+  return "${retval}"
+}
+
 # Cleanup npm package dependencies.
+#
 # Arguments:
 #   None
 # Returns:
 #   $? - Boolean
-#########################
 function pkg_npm_clean() {
   local -i retval=0
 
@@ -356,46 +572,160 @@ function pkg_npm_clean() {
   return "${retval}"
 }
 
-########################
 # Install go package dependency.
+#
 # Arguments:
 #   $1 - package
 #   $2 - version
 # Returns:
 #   $? - Boolean
-#########################
 function pkg_go_install() {
   local package="${1:?package is missing}"
   local version="${2:-}"
 
   local -i retval=0
 
-  if ! command -v "${package}" &>/dev/null; then
-    if util_string_exist "${version}"; then
-      go install "${package}"@"${version}"
-      ((retval = $?))
-    else
-      go install "${package}@latest"
-      ((retval = $?))
-    fi
+  # Check if package is already installed (any version)
+  local package_path
+  package_path="$(go env GOPATH)/bin/${package}"
+  if [[ -x "${package_path}" ]]; then
+    return 0
   fi
+
+  go install "${package}"@"${version:-latest}"
+  ((retval = $?))
 
   return "${retval}"
 }
 
-########################
 # Install go package list dependencies.
+#
 # Arguments:
 #   $@ - packages
 # Returns:
 #   $? - Boolean
-#########################
 function pkg_go_install_list() {
   local -A packages="${1:?array is missing}"
 
   local -i retval=0
 
+  # XXX Add Go binaries to PATH
+  PATH="${PATH}:$(go env GOPATH)/bin"
+  export PATH
+
   pkg_list pkg_go_install "${packages[@]}"
+  ((retval |= $?))
+
+  return "${retval}"
+}
+
+# Uninstall go package dependency by removing its binary.
+#
+# Arguments:
+#   $1 - Package import path or binary name (required)
+#   $2 - version (optional, currently unused)
+# Returns:
+#   $? - 0 if binary was removed or did not exist, non-zero on error
+function pkg_go_uninstall() {
+  local package="${1:?package is missing}"
+  local version="${2:-}"
+
+  local -i retval=0
+
+  # Check if package is installed (any version)
+  local package_path
+  package_path="$(go env GOPATH)/bin/${package}"
+  if [[ ! -e "${package_path}" ]]; then
+    return 0
+  fi
+
+  rm -f -- "${package_path}"
+  ((retval = $?))
+
+  return "${retval}"
+}
+
+# Uninstall go package list dependencies.
+#
+# Arguments:
+#   $@ - packages
+# Returns:
+#   $? - Boolean
+function pkg_go_uninstall_list() {
+  local -A packages="${1:?array is missing}"
+
+  local -i retval=0
+
+  pkg_list pkg_go_uninstall "${packages[@]}"
+  ((retval |= $?))
+
+  return "${retval}"
+}
+
+# Cleanup go package dependencies.
+#
+# Arguments:
+#   None
+# Returns:
+#   $? - Boolean
+function pkg_go_clean() {
+  local -i retval=0
+
+  # Cleans build cache
+  go clean -cache
+  ((retval |= $?))
+
+  # Cleans downloaded module dependencies
+  go clean -modcache
+  ((retval |= $?))
+
+  log_message "clean" "go" "${retval}"
+
+  return "${retval}"
+}
+
+# Download a file using wget.
+#
+# Arguments:
+#   $1 - URL (may contain `<version>` placeholder)
+#   $2 - version string (optional)
+# Returns:
+#   $? - Boolean
+function pkg_wget_download() {
+  local url="${1:?URL is missing}"
+  local version="${2:-}"
+
+  local -i retval=0
+
+  if util_string_exist "${version}"; then
+    url="${url//<version>/$version}"
+  fi
+
+  local dest
+  dest="$(basename "$url")"
+
+  if util_file_exist "${dest}"; then
+    return 0
+  fi
+
+  wget -q "$url" -O "$dest"
+  ((retval = $?))
+
+  return "${retval}"
+}
+
+# Download a list of files using wget.
+#
+# Arguments:
+#   $@ - packages
+# Returns:
+#   $? - Boolean
+function pkg_wget_download_list() {
+  local -A urls="${1:?array is missing}"
+
+  local -i retval=0
+
+  pkg_list pkg_wget_download "${urls[@]}"
   ((retval |= $?))
 
   return "${retval}"

@@ -1,16 +1,15 @@
 # Shell
 
-The **Bash Shell Library** is a collection of reusable functions, utilities.
+The **Bash Shell Library** provides a set of functions to simplify common shell scripting tasks, such as file manipulation, string processing, and system information retrieval.
 
-- [1. Installation](#1-installation)
-- [2. Usage](#2-usage)
-- [3. License](#3-license)
+- [1. Usage](#1-usage)
+  - [1.1. Details](#11-details)
+  - [1.2. Task Runner](#12-task-runner)
 
-## 1. Installation
 
-TODO Describe the installation process. Provide step by step examples of how to get the development environment running.
+## 1. Usage
 
-## 2. Usage
+### 1.1. Details
 
 1. Include Library
 
@@ -26,6 +25,27 @@ TODO Describe the installation process. Provide step by step examples of how to 
 
     Browse the library files (`bash_library.sh` and related modules) to discover available functions. Use them directly in your scripts.
 
-## 3. License
+### 1.2. Task Runner
 
-`Apache-2.0` Licensed. See the [LICENSE](LICENSE) file for details.
+- [Makefile](Makefile)
+  > Refer to the Makefile as the Task Runner file.
+
+  > [!NOTE]
+  > Run the `make help` command in the terminal to list the tasks used for the project.
+
+  ```plaintext
+  $ make help
+
+  Task
+          A collection of tasks used in current project.
+
+  Usage
+          make [target]
+
+          bootstrap           Initialize a software development workspace with requisites
+          setup               Install and configure all dependencies essential for development
+          teardown            Remove development artifacts and restore the host to its pre-setup state
+          setup-release       Setup the release environment
+          release             Perform the release analysis
+          workflow-release    Workflow of the release process
+  ```
