@@ -45,7 +45,4 @@ The **Bash Shell Library** provides a set of functions to simplify common shell 
           bootstrap           Initialize a software development workspace with requisites
           setup               Install and configure all dependencies essential for development
           teardown            Remove development artifacts and restore the host to its pre-setup state
-          setup-release       Setup the release environment
-          release             Perform the release analysis
-          workflow-release    Workflow of the release process
   ```

@@ -44,11 +44,6 @@ teardown:
 	cd $(@D)/scripts && chmod +x teardown.sh && ./teardown.sh
 .PHONY: teardown
 
-## Setup the release environment
-setup-release:
-	cd $(@D)/scripts && chmod +x setup_release.sh && ./setup_release.sh
-.PHONY: setup-release
-
 ## Perform the release analysis
 release:
 	$(SHELL_COMMAND) $(SHELL_FILE_CLI) && cli_semantic_release
