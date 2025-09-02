@@ -2,19 +2,19 @@
 
 The `/internal` directory contains uitlity script functions.
 
-Files and Directories:
+1. Files and Directories
 
-- `cli.sh`
-  > Contains functions for command-line interface operations.
+    - `cli.sh`
+      > Contains functions for command-line interface operations.
 
-- `log.sh`
-  > Contains functions responsible for logging messages.
+    - `log.sh`
+      > Contains functions responsible for logging messages.
 
-- `pkg.sh`
-  > Contains functions used for managing package dependencies and configurations.
+    - `pkg.sh`
+      > Contains functions used for managing package dependencies and configurations.
 
-- `util.sh`
-  > Contains miscellaneous utility functions.
+    - `util.sh`
+      > Contains miscellaneous utility functions.
 
-- `git.sh`
-  > TODO
+    - `git.sh`
+      > TODO

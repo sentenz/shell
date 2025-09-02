@@ -6,7 +6,6 @@ The **Bash Shell Library** provides a set of functions to simplify common shell 
   - [1.1. Details](#11-details)
   - [1.2. Task Runner](#12-task-runner)
 
-
 ## 1. Usage
 
 ### 1.1. Details
@@ -36,11 +35,11 @@ The **Bash Shell Library** provides a set of functions to simplify common shell 
   ```plaintext
   $ make help
 
-  Task
-          A collection of tasks used in current project.
+  Tasks
+          A collection of tasks used in the current project.
 
   Usage
-          make [target]
+          make <task>
 
           bootstrap           Initialize a software development workspace with requisites
           setup               Install and configure all dependencies essential for development
