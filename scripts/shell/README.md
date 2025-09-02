@@ -1,6 +1,6 @@
-# `/internal`
+# `/shell`
 
-The `/internal` directory contains uitlity script functions.
+The `/shell` directory contains utility script functions.
 
 1. Files and Directories
 
